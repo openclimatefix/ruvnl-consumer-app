@@ -4,12 +4,9 @@ Main consumer app entrypoint
 
 import datetime as dt
 import logging
-import os
 import sys
 
 import click
-from pvsite_datamodel import DatabaseConnection
-
 
 log = logging.getLogger(__name__)
 
@@ -50,12 +47,12 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
         timestamp.replace(tzinfo=dt.UTC)
         
     # 0. Initialise DB connection
-    url = os.environ["DB_URL"]
+    # url = os.environ["DB_URL"]
 
-    db_conn = DatabaseConnection(url, echo=False)
-    
-    with db_conn.get_session() as session:
-        pass
+    # db_conn = DatabaseConnection(url, echo=False)
+    # with db_conn.get_session() as session:
+
+    pass
 
 
 if __name__ == "__main__":
