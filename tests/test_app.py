@@ -1,13 +1,29 @@
 """
 Tests for functions in app.py
 """
-import datetime as dt
 
 import pytest
 
 from ruvnl_consumer_app.app import app
 
 from ._utils import run_click_script
+
+
+def test_get_sites(db_session):
+    """Test for getting correct sites"""
+    pass
+
+
+def test_save_generation_data(db_session):
+    """Test for saving generation data"""
+    pass
+
+
+def test_fetch_data():
+    """Test for correctly fetching data"""
+    pass
+
+
 
 
 @pytest.mark.parametrize("write_to_db", [True, False])
@@ -18,7 +34,7 @@ def test_app(write_to_db, db_session):
     # init_n_forecasts = db_session.query(ForecastSQL).count()
     # init_n_forecast_values = db_session.query(ForecastValueSQL).count()
 
-    args = ["--date", dt.datetime.now(tz=dt.UTC).strftime("%Y-%m-%d-%H-%M")]
+    args = []
     if write_to_db:
         args.append('--write-to-db')
 
