@@ -3,6 +3,10 @@
 from click.testing import CliRunner
 
 
+def load_mock_response(response_file_name):
+    with open(response_file_name) as f:
+        return f.read()
+
 def run_click_script(func, args: list[str], catch_exceptions: bool = False):
     """Util to test click scripts while showing the stdout."""
 

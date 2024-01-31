@@ -33,8 +33,17 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
 
     sites = get_sites_by_country(db_session, country="india")
 
-    # TODO don't assume there are only 2 sites in the DB - check!
-    return sites
+    # This naively selects the 1st wind and 1st pv site in the array
+    valid_sites = []
+    for asset_type in ["pv", "wind"]:
+
+        site = next((s for s in sites if s.asset_type.name == asset_type), None)
+        if site is not None:
+            valid_sites.append(site)
+        else:
+            log.warning(f"Could not find site for asset type: {asset_type}")
+
+    return valid_sites
 
 
 def fetch_data(data_url: str) -> pd.DataFrame:
@@ -55,17 +64,46 @@ def fetch_data(data_url: str) -> pd.DataFrame:
     raw_data = r.json()
     asset_map = {"WIND GEN": "wind", "SOLAR GEN": "pv"}
     data = []
-    for d in raw_data["data"]:
-        record = d["0"]
-        key = record["scada_name"]
-        if key in asset_map.keys():
+    for k, v in asset_map.items():
+        record = next((d["0"] for d in raw_data["data"] if d["0"]["scada_name"] == k), None)
+        if record is not None:
             data.append({
-                "asset_type": asset_map[key],
+                "asset_type": v,
                 "start_utc": dt.datetime.fromtimestamp(int(record["SourceTimeSec"]), tz=dt.UTC),
                 "power_kw": record["Average2"] * 1000  # source is in MW, convert to kW
             })
+        else:
+            log.warning(f"No generation data for asset type: {v}")
 
     return pd.DataFrame(data)
+
+
+def merge_generation_data_with_sites(
+        data: pd.DataFrame,
+        sites: list[SiteSQL]
+):
+    """
+    Augments the input dataframe with corresponding site_uuid
+
+    Args:
+            data: A dataframe of generation data
+            sites: a list of SiteSQL objects
+
+    Returns:
+            An augmented dataframe with the associated site uuids
+    """
+
+    # Associate correct site_uuid with each generation asset type
+    sites_map = {s.asset_type.name: s.site_uuid for s in sites}
+    data["site_uuid"] = data["asset_type"].apply(lambda d: sites_map[d] if d in sites_map else None)
+
+    # Remove generation data for which we have no associated site
+    data = data[data["site_uuid"].notnull()]
+
+    # Drop asset_type column
+    data = data.drop("asset_type", axis=1)
+
+    return data
 
 
 def save_generation_data(
@@ -83,8 +121,9 @@ def save_generation_data(
     """
     if write_to_db:
         insert_generation_values(db_session, generation_data)
+        db_session.commit()
     else:
-        log.info(f"\n{generation_data}")
+        log.info(f"Generation data:\n{generation_data.to_string()}")
 
 
 @click.command()
@@ -113,18 +152,23 @@ def app(write_to_db: bool, log_level: str) -> None:
     with db_conn.get_session() as session:
         # 1. Get sites
         log.info("Getting sites...")
-        # TODO Gets sites (1 for PV, 1 for wind)
+        sites = get_sites(session)
+        log.info(f"Found {len(sites)} sites")
 
         # 2. Fetch latest generation data
         log.info(f"Fetching generation data from {DATA_URL}...")
         data = fetch_data(DATA_URL)
 
         # 3. Assign site to generation data
-        # TODO Assign site to generation data
+        data = merge_generation_data_with_sites(data, sites)
 
         # 3. Write generation data to DB or stdout
-        log.info("Writing generation data...")
-        save_generation_data(session, data, write_to_db)
+        if data.empty:
+            log.warning("No generation data to write")
+        else:
+            log.info("Writing generation data...")
+            log.info(data)
+            save_generation_data(session, data, write_to_db)
 
         log.info("Done!")
 

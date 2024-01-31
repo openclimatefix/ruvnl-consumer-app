@@ -17,6 +17,7 @@ pytest = "^7.4.4"
 pytest-cov = "^4.1.0"
 ruff = "^0.1.11"
 testcontainers = "^3.7.1"
+requests-mock = "^1.11.0"
 
 [tool.poetry.scripts]
 app = "ruvnl_consumer_app.app:app"
