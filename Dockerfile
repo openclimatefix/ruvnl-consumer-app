@@ -8,8 +8,8 @@ WORKDIR /app
 
 FROM base as builder
 
-#RUN apt-get update
-#RUN apt-get install -y gdal-bin libgdal-dev g++
+RUN apt-get update
+RUN apt-get install -y gdal-bin libgdal-dev g++
 
 ENV PIP_DEFAULT_TIMEOUT=100 \
 	PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -34,4 +34,4 @@ COPY --from=builder /venv /venv
 COPY --from=builder /app/dist .
 RUN . /venv/bin/activate && pip install *.whl
 
-ENTRYPOINT ["app"]
+ENTRYPOINT ["app", "--write-to-db"]

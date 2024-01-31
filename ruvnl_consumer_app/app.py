@@ -167,7 +167,6 @@ def app(write_to_db: bool, log_level: str) -> None:
             log.warning("No generation data to write")
         else:
             log.info("Writing generation data...")
-            log.info(data)
             save_generation_data(session, data, write_to_db)
 
         log.info("Done!")
