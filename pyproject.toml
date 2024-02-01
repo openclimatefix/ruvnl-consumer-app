@@ -10,15 +10,17 @@ python = "^3.11"
 click = "^8.1.7"
 pvsite-datamodel = "^1.0.10"
 pandas = "1.5.3"
+requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.4"
 pytest-cov = "^4.1.0"
 ruff = "^0.1.11"
 testcontainers = "^3.7.1"
+requests-mock = "^1.11.0"
 
 [tool.poetry.scripts]
-app = "ruvnl_consumer.app:app"
+app = "ruvnl_consumer_app.app:app"
 seeder = "scripts.seed_local_db:seed_db"
 
 [tool.ruff]
