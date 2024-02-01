@@ -10,7 +10,7 @@ import requests
 from pvsite_datamodel import GenerationSQL, SiteSQL
 
 from ruvnl_consumer_app.app import (
-    DATA_URL,
+    DEFAULT_DATA_URL,
     app,
     fetch_data,
     get_sites,
@@ -62,10 +62,10 @@ class TestFetchData:
         """Test for correctly fetching data"""
 
         requests_mock.get(
-            DATA_URL,
+            DEFAULT_DATA_URL,
             text=load_mock_response("tests/mock/responses/ruvnl-valid-response.json")
         )
-        result = fetch_data(DATA_URL)
+        result = fetch_data(DEFAULT_DATA_URL)
 
         assert isinstance(result, pd.DataFrame)
 
@@ -86,10 +86,10 @@ class TestFetchData:
         """Test for fetching data with missing asset type"""
 
         requests_mock.get(
-            DATA_URL,
+            DEFAULT_DATA_URL,
             text=load_mock_response("tests/mock/responses/ruvnl-valid-response-missing-pv.json")
         )
-        result = fetch_data(DATA_URL)
+        result = fetch_data(DEFAULT_DATA_URL)
 
         assert result.shape[0] == 1
         assert result.iloc[0]["asset_type"] == "wind"
@@ -99,22 +99,22 @@ class TestFetchData:
         """Test for catching bad response code"""
 
         requests_mock.get(
-            DATA_URL,
+            DEFAULT_DATA_URL,
             status_code=404,
             reason="Not Found"
         )
         with pytest.raises(requests.exceptions.HTTPError):
-            fetch_data(DATA_URL)
+            fetch_data(DEFAULT_DATA_URL)
 
     def test_catch_bad_response_json(self, requests_mock):
         """Test for catching invalid response JSON"""
 
         requests_mock.get(
-            DATA_URL,
+            DEFAULT_DATA_URL,
             text=load_mock_response("tests/mock/responses/ruvnl-invalid-response.json"),
         )
         with pytest.raises(requests.exceptions.JSONDecodeError):
-            fetch_data(DATA_URL)
+            fetch_data(DEFAULT_DATA_URL)
 
 
 class TestMergeGenerationDataWithSite:
@@ -187,7 +187,7 @@ def test_app(write_to_db, requests_mock, db_session, caplog):
 
     caplog.set_level(logging.INFO)
     requests_mock.get(
-        DATA_URL,
+        DEFAULT_DATA_URL,
         text=load_mock_response("tests/mock/responses/ruvnl-valid-response.json")
     )
     init_n_generation_data = db_session.query(GenerationSQL).count()

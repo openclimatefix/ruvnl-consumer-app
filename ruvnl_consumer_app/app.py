@@ -1,5 +1,11 @@
 """
 Main consumer app entrypoint
+
+Before running this app, set the following environment variables:
+
+DB_URL: postgres DB connection string (required)
+DATA_URL: of generation JSON data (optional)
+
 """
 
 import datetime as dt
@@ -17,7 +23,7 @@ from sqlalchemy.orm import Session
 
 log = logging.getLogger(__name__)
 
-DATA_URL = "http://sldc.rajasthan.gov.in/rrvpnl/read-sftp?type=overview"
+DEFAULT_DATA_URL = "http://sldc.rajasthan.gov.in/rrvpnl/read-sftp?type=overview"
 
 
 def get_sites(db_session: Session) -> list[SiteSQL]:
@@ -81,7 +87,7 @@ def fetch_data(data_url: str) -> pd.DataFrame:
 def merge_generation_data_with_sites(
         data: pd.DataFrame,
         sites: list[SiteSQL]
-):
+) -> pd.DataFrame:
     """
     Augments the input dataframe with corresponding site_uuid
 
@@ -145,8 +151,10 @@ def app(write_to_db: bool, log_level: str) -> None:
     """
     logging.basicConfig(stream=sys.stdout, level=getattr(logging, log_level.upper()))
 
-    # 0. Initialise DB connection
     url = os.environ["DB_URL"]
+    data_url = os.getenv("DATA_URL", DEFAULT_DATA_URL)
+
+    # 0. Initialise DB connection
     db_conn = DatabaseConnection(url, echo=False)
 
     with db_conn.get_session() as session:
@@ -156,8 +164,8 @@ def app(write_to_db: bool, log_level: str) -> None:
         log.info(f"Found {len(sites)} sites")
 
         # 2. Fetch latest generation data
-        log.info(f"Fetching generation data from {DATA_URL}...")
-        data = fetch_data(DATA_URL)
+        log.info(f"Fetching generation data from {data_url}...")
+        data = fetch_data(data_url)
 
         # 3. Assign site to generation data
         data = merge_generation_data_with_sites(data, sites)
