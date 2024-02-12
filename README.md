@@ -2,6 +2,8 @@
 
 This consumer pulls data from the Rajasthan Urja Vikas Nigam Limited (RUVNL) website.
 
+The API used is `https://sldc.rajasthan.gov.in/rrvpnl/read-sftp?type=overview`
+
 ## Install dependencies (requires [poetry](https://python-poetry.org/))
 
 ```
