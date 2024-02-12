@@ -81,22 +81,17 @@ def fetch_data(data_url: str) -> pd.DataFrame:
             start_utc = dt.datetime.fromtimestamp(int(record["SourceTimeSec"]), tz=dt.UTC)
             power_kw = record["Average2"] * 1000  # source is in MW, convert to kW
 
-            data.append({
-                "asset_type": v,
-                "start_utc": start_utc,
-                "power_kw": power_kw
-            })
-            log.info(f"Found generation data for asset type: {v}, {power_kw} kW at {start_utc} UTC")
+            data.append({"asset_type": v, "start_utc": start_utc, "power_kw": power_kw})
+            log.info(
+                f"Found generation data for asset type: {v}, " f"{power_kw} kW at {start_utc} UTC"
+            )
         else:
             log.warning(f"No generation data for asset type: {v}")
 
     return pd.DataFrame(data)
 
 
-def merge_generation_data_with_sites(
-        data: pd.DataFrame,
-        sites: list[SiteSQL]
-) -> pd.DataFrame:
+def merge_generation_data_with_sites(data: pd.DataFrame, sites: list[SiteSQL]) -> pd.DataFrame:
     """
     Augments the input dataframe with corresponding site_uuid
 
@@ -122,9 +117,7 @@ def merge_generation_data_with_sites(
 
 
 def save_generation_data(
-        db_session: Session,
-        generation_data: pd.DataFrame,
-        write_to_db: bool
+    db_session: Session, generation_data: pd.DataFrame, write_to_db: bool
 ) -> None:
     """
     Saves generation data to DB (or prints to stdout)
