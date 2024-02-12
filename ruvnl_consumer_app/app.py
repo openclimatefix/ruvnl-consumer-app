@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 
 log = logging.getLogger(__name__)
 
-DEFAULT_DATA_URL = "https://sldc.rajasthan.gov.in/rrvpnl/read-sftp?type=overview"
+DEFAULT_DATA_URL = "http://sldc.rajasthan.gov.in/rrvpnl/read-sftp?type=overview"
 
 
 def get_sites(db_session: Session) -> list[SiteSQL]:
