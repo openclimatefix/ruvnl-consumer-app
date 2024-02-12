@@ -77,11 +77,16 @@ def fetch_data(data_url: str) -> pd.DataFrame:
     for k, v in asset_map.items():
         record = next((d["0"] for d in raw_data["data"] if d["0"]["scada_name"] == k), None)
         if record is not None:
+
+            start_utc = dt.datetime.fromtimestamp(int(record["SourceTimeSec"]), tz=dt.UTC)
+            power_kw = record["Average2"] * 1000  # source is in MW, convert to kW
+
             data.append({
                 "asset_type": v,
-                "start_utc": dt.datetime.fromtimestamp(int(record["SourceTimeSec"]), tz=dt.UTC),
-                "power_kw": record["Average2"] * 1000  # source is in MW, convert to kW
+                "start_utc": start_utc,
+                "power_kw": power_kw
             })
+            log.debug(f"Found generation data for asset type: {v}, {power_kw} kW at {start_utc} UTC")
         else:
             log.warning(f"No generation data for asset type: {v}")
 
