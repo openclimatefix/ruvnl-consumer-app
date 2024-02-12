@@ -62,7 +62,11 @@ def fetch_data(data_url: str) -> pd.DataFrame:
     Returns:
             A pandas DataFrame of generation values for wind and PV
     """
-    r = requests.get(data_url)
+    try:
+        r = requests.get(data_url, timeout=10)  # 10 seconds
+    except requests.exceptions.Timeout as e:
+        log.error("Timed out")
+        raise e
 
     # Raise error if response is 4XX or 5XX
     r.raise_for_status()
