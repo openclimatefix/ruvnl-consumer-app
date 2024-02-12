@@ -86,7 +86,7 @@ def fetch_data(data_url: str) -> pd.DataFrame:
                 "start_utc": start_utc,
                 "power_kw": power_kw
             })
-            log.debug(f"Found generation data for asset type: {v}, {power_kw} kW at {start_utc} UTC")
+            log.info(f"Found generation data for asset type: {v}, {power_kw} kW at {start_utc} UTC")
         else:
             log.warning(f"No generation data for asset type: {v}")
 
