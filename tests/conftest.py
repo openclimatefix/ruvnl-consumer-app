@@ -62,7 +62,7 @@ def db_data(engine):
                 capacity_kw=4,
                 ml_id=1,
                 asset_type="pv",
-                country="india"
+                country="india",
             )
             session.add(site)
 
@@ -74,7 +74,7 @@ def db_data(engine):
                 capacity_kw=4,
                 ml_id=2,
                 asset_type="wind",
-                country="india"
+                country="india",
             )
             session.add(site)
 
@@ -90,11 +90,9 @@ def unassociated_generation_data(db_session):
     """
 
     sites = db_session.query(SiteSQL).all()
-    data = [(
-        "pv" if i == 0 else "wind",
-        dt.datetime.now(tz=dt.UTC),
-        i+1
-    ) for i, s in enumerate(sites)]
+    data = [
+        ("pv" if i == 0 else "wind", dt.datetime.now(tz=dt.UTC), i + 1) for i, s in enumerate(sites)
+    ]
 
     return pd.DataFrame(data, columns=["asset_type", "start_utc", "power_kw"])
 
@@ -104,6 +102,9 @@ def associated_generation_data(db_session):
     """A valid generation dataframe with associated site uuids"""
 
     sites = db_session.query(SiteSQL).all()
-    data = [(s.site_uuid, dt.datetime.now(tz=dt.UTC), i+1) for i, s in enumerate(sites)]
+    data = [
+        (s.site_uuid, dt.datetime.now(tz=dt.UTC), i + 1, s.asset_type.name)
+        for i, s in enumerate(sites)
+    ]
 
-    return pd.DataFrame(data, columns=["site_uuid", "start_utc", "power_kw"])
+    return pd.DataFrame(data, columns=["site_uuid", "start_utc", "power_kw", "asset_type"])
