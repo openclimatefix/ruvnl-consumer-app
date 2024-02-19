@@ -129,7 +129,7 @@ class TestMergeGenerationDataWithSite:
         assert isinstance(result, pd.DataFrame)
 
         # Assert correct num rows/cols and column names
-        assert result.shape == (2, 3)
+        assert result.shape == (2, 4)
         for col in ['site_uuid', 'start_utc', 'power_kw']:
             assert col in result.columns
 

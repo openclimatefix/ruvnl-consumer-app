@@ -21,6 +21,8 @@ from pvsite_datamodel.read import get_sites_by_country
 from pvsite_datamodel.write import insert_generation_values
 from sqlalchemy.orm import Session
 
+from ruvnl_consumer_app import __version__
+
 log = logging.getLogger(__name__)
 
 DEFAULT_DATA_URL = "http://sldc.rajasthan.gov.in/rrvpnl/read-sftp?type=overview"
@@ -110,9 +112,6 @@ def merge_generation_data_with_sites(data: pd.DataFrame, sites: list[SiteSQL]) -
     # Remove generation data for which we have no associated site
     data = data[data["site_uuid"].notnull()]
 
-    # Drop asset_type column
-    data = data.drop("asset_type", axis=1)
-
     return data
 
 
@@ -127,11 +126,23 @@ def save_generation_data(
             generation_data: a pandas Dataframe of generation values for PV and wind
             write_to_db: If true, generation values are written to db, otherwise to stdout
     """
-    if write_to_db:
-        insert_generation_values(db_session, generation_data)
-        db_session.commit()
-    else:
-        log.info(f"Generation data:\n{generation_data.to_string()}")
+
+    for asset_type in ["pv", "wind"]:
+        asset_data = generation_data[generation_data["asset_type"] == asset_type]
+
+        # Drop asset_type column
+        asset_data = asset_data.drop("asset_type", axis=1)
+
+        if asset_data.empty:
+            log.warning(f"No generation data for asset type: {asset_type}")
+            continue
+
+        if write_to_db:
+            insert_generation_values(db_session, asset_data)
+            db_session.commit()
+        else:
+            log.info(f"Generation data: {asset_type}:\n{asset_data.to_string()}")
+
 
 
 @click.command()
@@ -152,6 +163,8 @@ def app(write_to_db: bool, log_level: str) -> None:
     Main function for running data consumer
     """
     logging.basicConfig(stream=sys.stdout, level=getattr(logging, log_level.upper()))
+
+    log.info(f'Running data consumer app (version: {__version__})')
 
     url = os.environ["DB_URL"]
     data_url = os.getenv("DATA_URL", DEFAULT_DATA_URL)
