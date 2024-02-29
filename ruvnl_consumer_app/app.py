@@ -16,7 +16,7 @@ import sys
 import click
 import pandas as pd
 import requests
-from pvsite_datamodel import DatabaseConnection, SiteSQL
+from pvsite_datamodel import DatabaseConnection, GenerationSQL, SiteSQL
 from pvsite_datamodel.read import get_sites_by_country
 from pvsite_datamodel.write import insert_generation_values
 from sqlalchemy.orm import Session
@@ -88,16 +88,26 @@ def fetch_data(data_url: str) -> pd.DataFrame:
                 f"Found generation data for asset type: {v}, " f"{power_kw} kW at {start_utc} UTC"
             )
         else:
-            log.warning(f"No generation data for asset type: {v}")
+            log.warning(f"No generation data for asset type: {v}. Filling with Nans")
+            data.append({
+                "asset_type": v,
+                "start_utc": dt.datetime.now(tz=dt.UTC),
+                "power_kw": None
+            })
 
     return pd.DataFrame(data)
 
 
-def merge_generation_data_with_sites(data: pd.DataFrame, sites: list[SiteSQL]) -> pd.DataFrame:
+def merge_generation_data_with_sites(
+        db_session: Session,
+        data: pd.DataFrame,
+        sites: list[SiteSQL]
+) -> pd.DataFrame:
     """
     Augments the input dataframe with corresponding site_uuid
 
     Args:
+            db_session: A SQLAlchemy session
             data: A dataframe of generation data
             sites: a list of SiteSQL objects
 
@@ -111,6 +121,24 @@ def merge_generation_data_with_sites(data: pd.DataFrame, sites: list[SiteSQL]) -
 
     # Remove generation data for which we have no associated site
     data = data[data["site_uuid"].notnull()]
+
+    # Get last generated timestamp for each site
+    last_gen = (db_session.query(GenerationSQL.start_utc).distinct(GenerationSQL.site_uuid)
+                .filter(GenerationSQL.site_uuid.in_([s.site_uuid for s in sites]))
+                .order_by(GenerationSQL.site_uuid, GenerationSQL.start_utc.desc())
+                .all())
+
+    # TODO Fix the following code:
+    # using the last generated timestamps above, check the data["start_utc"] is not
+    # equal to last_gen. If it is, set data["start_utc"] to now() and data["power_kw"] to None
+
+    data.sort_values(by="site_uuid", ascending=True, inplace=True)
+    log.info(data["start_utc"])
+    log.info(last_gen)
+    mask = data["start_utc"] == last_gen
+    log.info(mask)
+    data.loc[mask, "start_utc"] = dt.datetime.now(dt.UTC)
+    data.loc[mask, "power_kw"] = None
 
     return data
 
@@ -183,7 +211,7 @@ def app(write_to_db: bool, log_level: str) -> None:
         data = fetch_data(data_url)
 
         # 3. Assign site to generation data
-        data = merge_generation_data_with_sites(data, sites)
+        data = merge_generation_data_with_sites(session, data, sites)
 
         # 3. Write generation data to DB or stdout
         if data.empty:

@@ -91,9 +91,11 @@ class TestFetchData:
         )
         result = fetch_data(DEFAULT_DATA_URL)
 
-        assert result.shape[0] == 1
-        assert result.iloc[0]["asset_type"] == "wind"
-        assert "No generation data for asset type: pv" in caplog.text
+        result.sort_values(by="asset_type", inplace=True)
+        assert result.shape[0] == 2
+        assert result.iloc[0]["asset_type"] == "pv"
+        assert pd.isna(result.iloc[0]["power_kw"])
+        assert "No generation data for asset type: pv. Filling with Nans" in caplog.text
 
     def test_catch_bad_response_code(self, requests_mock):
         """Test for catching bad response code"""
@@ -124,7 +126,7 @@ class TestMergeGenerationDataWithSite:
         """Test for successful merge of generation data with sites"""
 
         sites = db_session.query(SiteSQL).all()
-        result = merge_generation_data_with_sites(unassociated_generation_data, sites)
+        result = merge_generation_data_with_sites(db_session, unassociated_generation_data, sites)
 
         assert isinstance(result, pd.DataFrame)
 
@@ -148,7 +150,7 @@ class TestMergeGenerationDataWithSite:
         assert data_without_pv.shape[0] == 1
         assert data_without_pv.iloc[0]["asset_type"] == "wind"
 
-        result = merge_generation_data_with_sites(data_without_pv, sites)
+        result = merge_generation_data_with_sites(db_session, data_without_pv, sites)
 
         assert result.shape[0] == 1
         assert (result.iloc[0]["site_uuid"] ==
@@ -161,7 +163,7 @@ class TestMergeGenerationDataWithSite:
 
         sites = db_session.query(SiteSQL).filter(SiteSQL.asset_type == "wind")
 
-        result = merge_generation_data_with_sites(unassociated_generation_data, sites)
+        result = merge_generation_data_with_sites(db_session, unassociated_generation_data, sites)
 
         assert result.shape[0] == 1
         assert (result.iloc[0]["site_uuid"] ==
