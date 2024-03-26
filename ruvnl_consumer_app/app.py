@@ -12,7 +12,7 @@ import datetime as dt
 import logging
 import os
 import sys
-
+import pytz
 import click
 import pandas as pd
 import requests
@@ -83,10 +83,10 @@ def fetch_data(data_url: str) -> pd.DataFrame:
 
             start_utc = dt.datetime.fromtimestamp(int(record["SourceTimeSec"]), tz=dt.UTC)
             power_kw = record["Average2"] * 1000  # source is in MW, convert to kW
-            if (v=="wind"):
+            if v=="wind":
                 if(start_utc<dt.datetime.now(dt.timezone.utc)-dt.timedelta(hours=0)):
-                        timestamp_after_raise = f"Timestamp: {dt.datetime.now(dt.timezone.utc)+dt.timedelta(hours=5.5)}"
-                        raise Exception("Start time is at least 1 hour old. " + timestamp_after_raise)
+                        timestamp_after_raise = f"Timestamp: {(dt.datetime.now(pytz.timezone('Asia/Calcutta')))}"
+                        raise Exception("Start time is at least 1 hour old. " + timestamp_after_raise )
             
             data.append({"asset_type": v, "start_utc": start_utc, "power_kw": power_kw})
             log.info(
