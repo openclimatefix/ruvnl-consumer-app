@@ -64,6 +64,7 @@ def fetch_data(data_url: str) -> pd.DataFrame:
     Returns:
             A pandas DataFrame of generation values for wind and PV
     """
+    print("Starting to get data")
     try:
         r = requests.get(data_url, timeout=10)  # 10 seconds
     except requests.exceptions.Timeout as e:
@@ -82,7 +83,11 @@ def fetch_data(data_url: str) -> pd.DataFrame:
 
             start_utc = dt.datetime.fromtimestamp(int(record["SourceTimeSec"]), tz=dt.UTC)
             power_kw = record["Average2"] * 1000  # source is in MW, convert to kW
-
+            if (v=="wind"):
+                if(start_utc<dt.datetime.now(dt.timezone.utc)-dt.timedelta(hours=0)):
+                        timestamp_after_raise = f"Timestamp: {dt.datetime.now(dt.timezone.utc)+dt.timedelta(hours=5.5)}"
+                        raise Exception("Start time is at least 1 hour old. " + timestamp_after_raise)
+            
             data.append({"asset_type": v, "start_utc": start_utc, "power_kw": power_kw})
             log.info(
                 f"Found generation data for asset type: {v}, " f"{power_kw} kW at {start_utc} UTC"
@@ -166,7 +171,7 @@ def app(write_to_db: bool, log_level: str) -> None:
 
     log.info(f'Running data consumer app (version: {__version__})')
 
-    url = os.environ["DB_URL"]
+    url = os.getenv("DB_URL", "sqlite:///test.db")
     data_url = os.getenv("DATA_URL", DEFAULT_DATA_URL)
 
     # 0. Initialise DB connection
