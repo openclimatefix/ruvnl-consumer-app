@@ -12,9 +12,10 @@ import datetime as dt
 import logging
 import os
 import sys
-import pytz
+
 import click
 import pandas as pd
+import pytz
 import requests
 from pvsite_datamodel import DatabaseConnection, SiteSQL
 from pvsite_datamodel.read import get_sites_by_country
@@ -84,9 +85,14 @@ def fetch_data(data_url: str) -> pd.DataFrame:
             start_utc = dt.datetime.fromtimestamp(int(record["SourceTimeSec"]), tz=dt.UTC)
             power_kw = record["Average2"] * 1000  # source is in MW, convert to kW
             if v=="wind":
-                if(start_utc<dt.datetime.now(dt.timezone.utc)-dt.timedelta(hours=0)):
-                        timestamp_after_raise = f"Timestamp: {(dt.datetime.now(pytz.timezone('Asia/Calcutta')))}"
-                        raise Exception("Start time is at least 1 hour old. " + timestamp_after_raise )
+                if(start_utc<dt.datetime.now(dt.timezone.utc)-dt.timedelta(hours=1)):
+                        start_ist = start_utc. astimezone(pytz.timezone('Asia/Calcutta'))
+                        start_ist=str(start_ist)
+                        now = dt.datetime.now(pytz.timezone('Asia/Calcutta'))
+                        now = str(now)
+                        timestamp_after_raise = f"Timestamp Now: {now} Timestamp data: {start_ist}"
+                        timestamp_fstring = f"{timestamp_after_raise}"
+                        raise Exception("Start time is at least 1 hour old. " + timestamp_fstring)
             
             data.append({"asset_type": v, "start_utc": start_utc, "power_kw": power_kw})
             log.info(
