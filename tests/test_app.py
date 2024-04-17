@@ -117,7 +117,7 @@ class TestFetchData:
             text=load_mock_response("tests/mock/responses/ruvnl-valid-response.json")
         )
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception): # noqa
             fetch_data(DEFAULT_DATA_URL)
 
     def test_catch_bad_response_json(self, requests_mock):
