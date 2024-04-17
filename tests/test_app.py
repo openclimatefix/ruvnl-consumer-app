@@ -7,8 +7,8 @@ import uuid
 import pandas as pd
 import pytest
 import requests
-from pvsite_datamodel import GenerationSQL, SiteSQL
 from freezegun import freeze_time
+from pvsite_datamodel import GenerationSQL, SiteSQL
 
 from ruvnl_consumer_app.app import (
     DEFAULT_DATA_URL,
