@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 import requests
 from pvsite_datamodel import GenerationSQL, SiteSQL
+from freezegun import freeze_time
 
 from ruvnl_consumer_app.app import (
     DEFAULT_DATA_URL,
@@ -58,6 +59,7 @@ class TestFetchData:
     Test suite for fetching data from RUVNL
     """
 
+    @freeze_time("2021-01-31T10:01:00Z")
     def test_fetch_data(self, requests_mock):
         """Test for correctly fetching data"""
 
@@ -82,6 +84,7 @@ class TestFetchData:
         for vals in result[["start_utc", "power_kw"]]:
             assert not pd.isna(vals)
 
+    @freeze_time("2021-01-31T10:01:00Z")
     def test_fetch_data_with_missing_asset(self, requests_mock, caplog):
         """Test for fetching data with missing asset type"""
 
@@ -104,6 +107,17 @@ class TestFetchData:
             reason="Not Found"
         )
         with pytest.raises(requests.exceptions.HTTPError):
+            fetch_data(DEFAULT_DATA_URL)
+
+    def test_old_fetch_data(self, requests_mock):
+        """Test for correctly fetching data"""
+
+        requests_mock.get(
+            DEFAULT_DATA_URL,
+            text=load_mock_response("tests/mock/responses/ruvnl-valid-response.json")
+        )
+
+        with pytest.raises(Exception):
             fetch_data(DEFAULT_DATA_URL)
 
     def test_catch_bad_response_json(self, requests_mock):
@@ -181,6 +195,7 @@ def test_save_generation_data(write_to_db, db_session, caplog, associated_genera
         assert "Generation data:" in caplog.text
 
 
+@freeze_time("2021-01-31T10:01:00Z")
 @pytest.mark.parametrize("write_to_db", [True, False])
 def test_app(write_to_db, requests_mock, db_session, caplog):
     """Test for running app from command line"""
