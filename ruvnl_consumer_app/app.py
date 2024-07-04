@@ -92,7 +92,7 @@ def fetch_data(data_url: str) -> pd.DataFrame:
                     now = str(now)
                     timestamp_after_raise = f"Timestamp Now: {now} Timestamp data: {start_ist}"
                     timestamp_fstring = f"{timestamp_after_raise}"
-                    logger.warning("Start time is at least 1 hour old. " + timestamp_fstring)
+                    log.warning("Start time is at least 1 hour old. " + timestamp_fstring)
 
             data.append({"asset_type": v, "start_utc": start_utc, "power_kw": power_kw})
             log.info(
