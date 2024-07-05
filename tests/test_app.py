@@ -22,6 +22,8 @@ from ruvnl_consumer_app.app import (
 from ._utils import load_mock_response, run_click_script
 
 
+retry_interval=0
+
 class TestGetSites:
     """
     Test Suite for getting sites
@@ -67,7 +69,7 @@ class TestFetchData:
             DEFAULT_DATA_URL,
             text=load_mock_response("tests/mock/responses/ruvnl-valid-response.json")
         )
-        result = fetch_data(DEFAULT_DATA_URL)
+        result = fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
 
         assert isinstance(result, pd.DataFrame)
 
@@ -92,7 +94,7 @@ class TestFetchData:
             DEFAULT_DATA_URL,
             text=load_mock_response("tests/mock/responses/ruvnl-valid-response-missing-pv.json")
         )
-        result = fetch_data(DEFAULT_DATA_URL)
+        result = fetch_data(DEFAULT_DATA_URL,retry_interval=retry_interval)
 
         assert result.shape[0] == 1
         assert result.iloc[0]["asset_type"] == "wind"
@@ -107,7 +109,7 @@ class TestFetchData:
             reason="Not Found"
         )
         with pytest.raises(requests.exceptions.HTTPError):
-            fetch_data(DEFAULT_DATA_URL)
+            fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
 
     def test_old_fetch_data(self, requests_mock):
         """Test for correctly fetching data"""
@@ -118,7 +120,7 @@ class TestFetchData:
         )
 
         # we now just get a warning
-        fetch_data(DEFAULT_DATA_URL)
+        fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
 
     def test_catch_bad_response_json(self, requests_mock):
         """Test for catching invalid response JSON"""
@@ -128,7 +130,7 @@ class TestFetchData:
             text=load_mock_response("tests/mock/responses/ruvnl-invalid-response.json"),
         )
         with pytest.raises(requests.exceptions.JSONDecodeError):
-            fetch_data(DEFAULT_DATA_URL)
+            fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
 
 
 class TestMergeGenerationDataWithSite:
@@ -207,7 +209,7 @@ def test_app(write_to_db, requests_mock, db_session, caplog):
     )
     init_n_generation_data = db_session.query(GenerationSQL).count()
 
-    args = ['--retry-interval=1']
+    args = [f'--retry-interval={retry_interval}']
     if write_to_db:
         args.append('--write-to-db')
 
