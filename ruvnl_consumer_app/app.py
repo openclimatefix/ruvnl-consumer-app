@@ -11,6 +11,7 @@ DATA_URL: of generation JSON data (optional)
 import datetime as dt
 import logging
 import os
+import time
 import sys
 
 import click
@@ -66,11 +67,16 @@ def fetch_data(data_url: str) -> pd.DataFrame:
             A pandas DataFrame of generation values for wind and PV
     """
     print("Starting to get data")
-    try:
-        r = requests.get(data_url, timeout=10)  # 10 seconds
-    except requests.exceptions.Timeout as e:
-        log.error("Timed out")
-        raise e
+    retries = 0
+    while retries < 10:
+        try:
+            r = requests.get(data_url, timeout=10)  # 10 seconds
+        except requests.exceptions.Timeout as e:
+            log.error("Timed out")
+            raise e
+        log.info('Retrying again in 30 seconds')
+        time.sleep(30)
+        retries += 1
 
     # Raise error if response is 4XX or 5XX
     r.raise_for_status()
