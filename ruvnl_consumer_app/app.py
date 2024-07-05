@@ -56,12 +56,13 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
     return valid_sites
 
 
-def fetch_data(data_url: str) -> pd.DataFrame:
+def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
     """
     Fetches the latest state-wide generation data for Rajasthan
 
     Args:
             data_url: The URL ot query data from
+            retry_interval: the amount of seconds to sleep between retying the api again.
 
     Returns:
             A pandas DataFrame of generation values for wind and PV
@@ -74,8 +75,8 @@ def fetch_data(data_url: str) -> pd.DataFrame:
         except requests.exceptions.Timeout as e:
             log.error("Timed out")
             raise e
-        log.info(f"Retrying again in 30 seconds (retry count: {retries})")
-        time.sleep(30)
+        log.info(f"Retrying again in {retry_interval} seconds (retry count: {retries})")
+        time.sleep(retry_interval)
         retries += 1
 
     # Raise error if response is 4XX or 5XX
@@ -174,7 +175,13 @@ def save_generation_data(
     help="Set the python logging log level",
     show_default=True,
 )
-def app(write_to_db: bool, log_level: str) -> None:
+@click.option(
+    "--retry-interval",
+    default=30,
+    help="Set the python logging log level",
+    show_default=True,
+)
+def app(write_to_db: bool, log_level: str, retry_interval: int) -> None:
     """
     Main function for running data consumer
     """
@@ -196,7 +203,7 @@ def app(write_to_db: bool, log_level: str) -> None:
 
         # 2. Fetch latest generation data
         log.info(f"Fetching generation data from {data_url}...")
-        data = fetch_data(data_url)
+        data = fetch_data(data_url, retry_interval)
 
         # 3. Assign site to generation data
         data = merge_generation_data_with_sites(data, sites)

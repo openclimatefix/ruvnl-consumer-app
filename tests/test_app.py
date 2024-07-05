@@ -207,7 +207,7 @@ def test_app(write_to_db, requests_mock, db_session, caplog):
     )
     init_n_generation_data = db_session.query(GenerationSQL).count()
 
-    args = []
+    args = ['--retry-interval=1']
     if write_to_db:
         args.append('--write-to-db')
 
