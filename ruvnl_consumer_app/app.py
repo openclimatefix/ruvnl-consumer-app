@@ -8,15 +8,16 @@ DATA_URL: of generation JSON data (optional)
 
 """
 
-import click
 import datetime as dt
 import logging
 import os
+import sys
+import time
+
+import click
 import pandas as pd
 import pytz
 import requests
-import sys
-import time
 from pvsite_datamodel import DatabaseConnection, SiteSQL
 from pvsite_datamodel.read import get_sites_by_country
 from pvsite_datamodel.write import insert_generation_values
