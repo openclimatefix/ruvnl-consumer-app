@@ -12,6 +12,7 @@ import datetime as dt
 import logging
 import os
 import sys
+import time
 
 import click
 import pandas as pd
@@ -55,25 +56,32 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
     return valid_sites
 
 
-def fetch_data(data_url: str) -> pd.DataFrame:
+def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
     """
     Fetches the latest state-wide generation data for Rajasthan
 
     Args:
             data_url: The URL ot query data from
+            retry_interval: the amount of seconds to sleep between retying the api again.
 
     Returns:
             A pandas DataFrame of generation values for wind and PV
     """
     print("Starting to get data")
-    try:
-        r = requests.get(data_url, timeout=10)  # 10 seconds
-    except requests.exceptions.Timeout as e:
-        log.error("Timed out")
-        raise e
+    retries = 0
+    while retries < 5:
+        try:
+            r = requests.get(data_url, timeout=1)  # 10 seconds
+        except requests.exceptions.Timeout:
+            log.error("Timed out")
+        log.info(f"Retrying again in {retry_interval} seconds (retry count: {retries})")
+        time.sleep(retry_interval)
+        retries += 1
 
-    # Raise error if response is 4XX or 5XX
-    r.raise_for_status()
+    # return empty dataframe if response is not 200
+    if r.status_code != 200:
+        log.warning(f"Failed to fetch data from {data_url}. Status code: {r.status_code}")
+        return pd.DataFrame(columns=["asset_type", "start_utc", "power_kw"])
 
     raw_data = r.json()
     asset_map = {"WIND GEN": "wind", "SOLAR GEN": "pv"}
@@ -168,7 +176,13 @@ def save_generation_data(
     help="Set the python logging log level",
     show_default=True,
 )
-def app(write_to_db: bool, log_level: str) -> None:
+@click.option(
+    "--retry-interval",
+    default=30,
+    help="Set the sleep time (seoncds) between retries for fetching data.",
+    show_default=True,
+)
+def app(write_to_db: bool, log_level: str, retry_interval: int) -> None:
     """
     Main function for running data consumer
     """
@@ -190,7 +204,7 @@ def app(write_to_db: bool, log_level: str) -> None:
 
         # 2. Fetch latest generation data
         log.info(f"Fetching generation data from {data_url}...")
-        data = fetch_data(data_url)
+        data = fetch_data(data_url, retry_interval)
 
         # 3. Assign site to generation data
         data = merge_generation_data_with_sites(data, sites)
