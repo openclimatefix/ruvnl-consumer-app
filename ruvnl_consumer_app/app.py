@@ -73,7 +73,7 @@ def fetch_data(data_url: str) -> pd.DataFrame:
         except requests.exceptions.Timeout as e:
             log.error("Timed out")
             raise e
-        log.info(f'Retrying again in 30 seconds (retry count: {retries})')
+        log.info(f"Retrying again in 30 seconds (retry count: {retries})")
         time.sleep(30)
         retries += 1
 
@@ -132,7 +132,7 @@ def merge_generation_data_with_sites(data: pd.DataFrame, sites: list[SiteSQL]) -
 
 
 def save_generation_data(
-        db_session: Session, generation_data: pd.DataFrame, write_to_db: bool
+    db_session: Session, generation_data: pd.DataFrame, write_to_db: bool
 ) -> None:
     """
     Saves generation data to DB (or prints to stdout)
