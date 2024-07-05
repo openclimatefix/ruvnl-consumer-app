@@ -71,16 +71,17 @@ def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
     retries = 0
     while retries < 5:
         try:
-            r = requests.get(data_url, timeout=10)  # 10 seconds
+            r = requests.get(data_url, timeout=1)  # 10 seconds
         except requests.exceptions.Timeout as e:
             log.error("Timed out")
-            raise e
         log.info(f"Retrying again in {retry_interval} seconds (retry count: {retries})")
         time.sleep(retry_interval)
         retries += 1
 
-    # Raise error if response is 4XX or 5XX
-    r.raise_for_status()
+    # return empty dataframe if response is not 200
+    if r.status_code != 200:
+        log.warning(f"Failed to fetch data from {data_url}. Status code: {r.status_code}")
+        return pd.DataFrame(columns=["asset_type", "start_utc", "power_kw"])
 
     raw_data = r.json()
     asset_map = {"WIND GEN": "wind", "SOLAR GEN": "pv"}

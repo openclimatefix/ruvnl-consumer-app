@@ -107,8 +107,8 @@ class TestFetchData:
             status_code=404,
             reason="Not Found"
         )
-        with pytest.raises(requests.exceptions.HTTPError):
-            fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
+        # just a warning now
+        fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
 
     def test_old_fetch_data(self, requests_mock):
         """Test for correctly fetching data"""
