@@ -74,7 +74,7 @@ def fetch_data(data_url: str) -> pd.DataFrame:
         except requests.exceptions.Timeout as e:
             log.error("Timed out")
             raise e
-        log.info('Retrying again in 30 seconds')
+        log.info(f'Retrying again in 30 seconds (retry count: {retries})')
         time.sleep(30)
         retries += 1
 
