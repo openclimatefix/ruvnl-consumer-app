@@ -178,7 +178,7 @@ def save_generation_data(
 @click.option(
     "--retry-interval",
     default=30,
-    help="Set the python logging log level",
+    help="Set the sleep time (seoncds) between retries for fetching data.",
     show_default=True,
 )
 def app(write_to_db: bool, log_level: str, retry_interval: int) -> None:
