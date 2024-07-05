@@ -21,7 +21,6 @@ from ruvnl_consumer_app.app import (
 
 from ._utils import load_mock_response, run_click_script
 
-
 retry_interval=0
 
 class TestGetSites:
