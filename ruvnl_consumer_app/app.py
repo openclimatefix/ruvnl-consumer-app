@@ -69,9 +69,13 @@ def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
     """
     print("Starting to get data")
     retries = 0
-    while retries < 5:
+    max_retries = 5
+    while retries < max_retries:
         try:
-            r = requests.get(data_url, timeout=1)  # 10 seconds
+            r = requests.get(data_url, timeout=1)  # 1 second
+            if r.status_code == 200:
+                # dont go into the loop again
+                retries = max_retries
         except requests.exceptions.Timeout:
             log.error("Timed out")
         log.info(f"Retrying again in {retry_interval} seconds (retry count: {retries})")
