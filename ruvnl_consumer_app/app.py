@@ -72,7 +72,7 @@ def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
     max_retries = 5
     while retries < max_retries:
         try:
-            r = requests.get(data_url, timeout=1)  # 1 second
+            r = requests.get(data_url, timeout=10)  # 10 second
             if r.status_code == 200:
                 # dont go into the loop again
                 retries = max_retries
