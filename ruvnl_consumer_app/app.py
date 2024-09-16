@@ -13,6 +13,7 @@ import logging
 import os
 import sys
 import time
+import sentry_sdk
 
 import click
 import pandas as pd
@@ -26,6 +27,14 @@ from sqlalchemy.orm import Session
 from ruvnl_consumer_app import __version__
 
 log = logging.getLogger(__name__)
+
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN"),
+    environment=os.getenv("ENVIRONMENT", "local"),
+    traces_sampler_rate=1
+)
+sentry_sdk.set_tag("app_name", "india_ruvnl_main")
+sentry_sdk.set_tag("version", version)
 
 DEFAULT_DATA_URL = "http://sldc.rajasthan.gov.in/rrvpnl/read-sftp?type=overview"
 
