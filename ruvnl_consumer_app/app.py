@@ -33,7 +33,7 @@ sentry_sdk.init(
     environment=os.getenv("ENVIRONMENT", "local"),
     traces_sampler_rate=1
 )
-sentry_sdk.set_tag("app_name", "india_ruvnl_main")
+sentry_sdk.set_tag("app_name", "india_ruvnl_consumer")
 sentry_sdk.set_tag("version", version)
 
 DEFAULT_DATA_URL = "http://sldc.rajasthan.gov.in/rrvpnl/read-sftp?type=overview"
