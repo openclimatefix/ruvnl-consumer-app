@@ -13,12 +13,12 @@ import logging
 import os
 import sys
 import time
-import sentry_sdk
 
 import click
 import pandas as pd
 import pytz
 import requests
+import sentry_sdk
 from pvsite_datamodel import DatabaseConnection, SiteSQL
 from pvsite_datamodel.read import get_sites_by_country
 from pvsite_datamodel.write import insert_generation_values
@@ -34,7 +34,7 @@ sentry_sdk.init(
     traces_sampler_rate=1
 )
 sentry_sdk.set_tag("app_name", "india_ruvnl_consumer")
-sentry_sdk.set_tag("version", version)
+sentry_sdk.set_tag("version", __version__)
 
 DEFAULT_DATA_URL = "http://sldc.rajasthan.gov.in/rrvpnl/read-sftp?type=overview"
 
