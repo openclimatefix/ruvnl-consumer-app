@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 sentry_sdk.init(
     dsn=os.getenv("SENTRY_DSN"),
     environment=os.getenv("ENVIRONMENT", "local"),
-    traces_sampler_rate=1
+    trace_sampler_rate=1
 )
 sentry_sdk.set_tag("app_name", "india_ruvnl_consumer")
 sentry_sdk.set_tag("version", __version__)
