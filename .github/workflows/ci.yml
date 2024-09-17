@@ -4,14 +4,14 @@ on: push
 
 jobs:
   lint_and_test:
-    uses: openclimatefix/.github/.github/workflows/poetry-python-test.yml@v1.8.3
+    uses: openclimatefix/.github/.github/workflows/poetry-python-test.yml@v1.8.4
     with:
       pytest_cov_dir: ruvnl_consumer_app
 
   release:
     needs: [lint_and_test]
     if: github.ref_name == 'main'
-    uses: openclimatefix/.github/.github/workflows/docker-release.yml@v1.8.1
+    uses: openclimatefix/.github/.github/workflows/docker-release.yml@v1.8.4
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
