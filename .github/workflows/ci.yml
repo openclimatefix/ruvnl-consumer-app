@@ -4,7 +4,7 @@ on: push
 
 jobs:
   lint_and_test:
-    uses: openclimatefix/.github/.github/workflows/poetry-python-test.yml@v1.8.4
+    uses: openclimatefix/.github/.github/workflows/poetry-python-test.yml@v1.8.3
     with:
       pytest_cov_dir: ruvnl_consumer_app
 
