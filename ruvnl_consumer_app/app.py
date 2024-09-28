@@ -94,6 +94,13 @@ def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
         time.sleep(retry_interval)
         retries += 1
 
+    # after all retries, if no success, raise an exception
+    if retries == max_retries:
+        error_message = f"""Failed to fetch data after {max_retries} retries. 
+        Last status code: {r.status_code if 'r' in locals() else 'No response received'}"""
+        log.error(error_message)
+        raise ConnectionError(error_message)
+
     # return empty dataframe if response is not 200
     if r.status_code != 200:
         log.warning(f"Failed to fetch data from {data_url}. Status code: {r.status_code}")
