@@ -1,6 +1,9 @@
 name: CI pipeline for RUVNL Consumer App
 
-on: push
+on: 
+  push:
+  pull_request:
+    types: [opened, reopened]
 
 jobs:
   lint_and_test:
