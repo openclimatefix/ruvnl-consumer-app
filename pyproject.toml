@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ruvnl-consumer-app"
-version = "0.1.14"
+version = "0.1.15"
 description = "Scrapes and saves data from the Rajasthan Urja Vikas Nigam Limited (RUVNL) website."
 authors = ["Chris Briggs <confusedmatrix@gmail.com>"]
 readme = "README.md"
