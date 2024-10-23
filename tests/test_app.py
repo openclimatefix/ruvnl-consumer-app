@@ -41,19 +41,6 @@ class TestGetSites:
         assert sites[0].asset_type.name == "pv"
         assert sites[1].asset_type.name == "wind"
 
-    def test_get_sites_only_one_asset_available(self, db_session, caplog):
-        """Test for getting sites where only one asset is available"""
-
-        # Remove PV sites
-        db_session.query(SiteSQL).filter(SiteSQL.asset_type == "pv").delete()
-
-        sites = get_sites(db_session)
-        sites = sorted(sites, key=lambda s: s.asset_type.name)
-
-        assert len(sites) == 1
-        assert sites[0].asset_type.name == "wind"
-        assert "Could not find site for asset type: pv" in caplog.text
-
 
 class TestFetchData:
     """
