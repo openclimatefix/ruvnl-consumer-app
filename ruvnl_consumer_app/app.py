@@ -62,6 +62,10 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
         else:
             log.warning(f"Could not find site for asset type: {asset_type}")
 
+        # only select sites with region equal ruvnl
+        valid_sites = [site for site in valid_sites if site.region == "ruvnl"]
+
+
     return valid_sites
 
 

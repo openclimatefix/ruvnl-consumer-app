@@ -63,6 +63,7 @@ def db_data(engine):
                 ml_id=1,
                 asset_type="pv",
                 country="india",
+                region='ruvnl'
             )
             session.add(site)
 
@@ -75,6 +76,7 @@ def db_data(engine):
                 ml_id=2,
                 asset_type="wind",
                 country="india",
+                region='ruvnl'
             )
             session.add(site)
 
