@@ -56,13 +56,16 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
     valid_sites = []
     for asset_type in ["pv", "wind"]:
 
-        valid_sites = [s for s in sites if s.asset_type.name == asset_type]
-        if len(valid_sites) == 0:
+        sites = [s for s in sites if s.asset_type.name == asset_type]
+        if len(sites) == 0:
             log.warning(f"Could not find site for asset type: {asset_type}")
 
         # only select sites with region equal ruvnl
-        valid_sites = [site for site in valid_sites if site.region == "ruvnl"]
+        sites = [site for site in sites if site.region == "ruvnl"]
 
+        assert len(sites) == 0, "No sites found for ruvnl region"
+
+        valid_sites.append(sites[0])
 
     return valid_sites
 
