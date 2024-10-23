@@ -29,9 +29,7 @@ from ruvnl_consumer_app import __version__
 log = logging.getLogger(__name__)
 
 sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN"),
-    environment=os.getenv("ENVIRONMENT", "local"),
-    traces_sample_rate=1
+    dsn=os.getenv("SENTRY_DSN"), environment=os.getenv("ENVIRONMENT", "local"), traces_sample_rate=1
 )
 sentry_sdk.set_tag("app_name", "india_ruvnl_consumer")
 sentry_sdk.set_tag("version", __version__)
@@ -50,20 +48,18 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
             A list of SiteSQL objects
     """
 
-    sites = get_sites_by_country(db_session, country="india")
+    all_sites = get_sites_by_country(db_session, country="india")
 
     # This naively selects the 1st wind and 1st pv site in the array
     valid_sites = []
     for asset_type in ["pv", "wind"]:
 
-        sites = [s for s in sites if s.asset_type.name == asset_type]
+        sites = [
+            s for s in all_sites if (s.asset_type.name == asset_type) and (s.region == "ruvnl")
+        ]
         if len(sites) == 0:
             log.warning(f"Could not find site for asset type: {asset_type}")
-
-        # only select sites with region equal ruvnl
-        sites = [site for site in sites if site.region == "ruvnl"]
-
-        assert len(sites) == 0, "No sites found for ruvnl region"
+            assert len(sites) > 0, f"No sites found for ruvnl region for asset type: {asset_type}"
 
         valid_sites.append(sites[0])
 
