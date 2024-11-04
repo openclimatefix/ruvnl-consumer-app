@@ -95,6 +95,10 @@ def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
         time.sleep(retry_interval)
         retries += 1
 
+        if retries == max_retries:
+            log.error(f"Max retries reached - Could not get data from {data_url}")
+            return pd.DataFrame(columns=["asset_type", "start_utc", "power_kw"])
+
     # return empty dataframe if response is not 200
     if r.status_code != 200:
         log.warning(f"Failed to fetch data from {data_url}. Status code: {r.status_code}")
