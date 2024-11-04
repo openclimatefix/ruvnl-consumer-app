@@ -21,7 +21,8 @@ from ruvnl_consumer_app.app import (
 
 from ._utils import load_mock_response, run_click_script
 
-retry_interval=0
+retry_interval = 0
+
 
 class TestGetSites:
     """
@@ -53,7 +54,7 @@ class TestFetchData:
 
         requests_mock.get(
             DEFAULT_DATA_URL,
-            text=load_mock_response("tests/mock/responses/ruvnl-valid-response.json")
+            text=load_mock_response("tests/mock/responses/ruvnl-valid-response.json"),
         )
         result = fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
 
@@ -61,7 +62,7 @@ class TestFetchData:
 
         # Assert correct num rows/cols and column names
         assert result.shape == (2, 3)
-        for col in ['asset_type', 'start_utc', 'power_kw']:
+        for col in ["asset_type", "start_utc", "power_kw"]:
             assert col in result.columns
 
         # Ensure 1 pv and wind value
@@ -78,9 +79,9 @@ class TestFetchData:
 
         requests_mock.get(
             DEFAULT_DATA_URL,
-            text=load_mock_response("tests/mock/responses/ruvnl-valid-response-missing-pv.json")
+            text=load_mock_response("tests/mock/responses/ruvnl-valid-response-missing-pv.json"),
         )
-        result = fetch_data(DEFAULT_DATA_URL,retry_interval=retry_interval)
+        result = fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
 
         assert result.shape[0] == 1
         assert result.iloc[0]["asset_type"] == "wind"
@@ -89,11 +90,7 @@ class TestFetchData:
     def test_catch_bad_response_code(self, requests_mock):
         """Test for catching bad response code"""
 
-        requests_mock.get(
-            DEFAULT_DATA_URL,
-            status_code=404,
-            reason="Not Found"
-        )
+        requests_mock.get(DEFAULT_DATA_URL, status_code=404, reason="Not Found")
         # just a warning now
         fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
 
@@ -102,7 +99,7 @@ class TestFetchData:
 
         requests_mock.get(
             DEFAULT_DATA_URL,
-            text=load_mock_response("tests/mock/responses/ruvnl-valid-response.json")
+            text=load_mock_response("tests/mock/responses/ruvnl-valid-response.json"),
         )
 
         # we now just get a warning
@@ -118,6 +115,14 @@ class TestFetchData:
         with pytest.raises(requests.exceptions.JSONDecodeError):
             fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
 
+    def test_call_bad_url(self, requests_mock):
+        """Test to check timeout doesnt cause error"""
+
+        requests_mock.get(DEFAULT_DATA_URL, exc=requests.exceptions.ConnectTimeout)
+
+        data = fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
+        assert len(data) == 0
+
 
 class TestMergeGenerationDataWithSite:
     """Test suite for merging generation data with site ids"""
@@ -132,15 +137,15 @@ class TestMergeGenerationDataWithSite:
 
         # Assert correct num rows/cols and column names
         assert result.shape == (2, 4)
-        for col in ['site_uuid', 'start_utc', 'power_kw']:
+        for col in ["site_uuid", "start_utc", "power_kw"]:
             assert col in result.columns
 
         for site_uuid in result["site_uuid"]:
             assert pd.notnull(site_uuid)
 
-    def test_merge_data_with_sites_with_missing_pv_data(self,
-                                                        db_session,
-                                                        unassociated_generation_data):
+    def test_merge_data_with_sites_with_missing_pv_data(
+        self, db_session, unassociated_generation_data
+    ):
         """Test for merge of generation data without pv with sites"""
 
         sites = db_session.query(SiteSQL).all()
@@ -153,12 +158,13 @@ class TestMergeGenerationDataWithSite:
         result = merge_generation_data_with_sites(data_without_pv, sites)
 
         assert result.shape[0] == 1
-        assert (result.iloc[0]["site_uuid"] ==
-                next(s.site_uuid for s in sites if s.asset_type.name == "wind"))
+        assert result.iloc[0]["site_uuid"] == next(
+            s.site_uuid for s in sites if s.asset_type.name == "wind"
+        )
 
-    def test_merge_data_with_sites_with_missing_pv_site(self,
-                                                        db_session,
-                                                        unassociated_generation_data):
+    def test_merge_data_with_sites_with_missing_pv_site(
+        self, db_session, unassociated_generation_data
+    ):
         """Test for merge of generation data with missing pv site"""
 
         sites = db_session.query(SiteSQL).filter(SiteSQL.asset_type == "wind")
@@ -166,8 +172,9 @@ class TestMergeGenerationDataWithSite:
         result = merge_generation_data_with_sites(unassociated_generation_data, sites)
 
         assert result.shape[0] == 1
-        assert (result.iloc[0]["site_uuid"] ==
-                next(s.site_uuid for s in sites if s.asset_type.name == "wind"))
+        assert result.iloc[0]["site_uuid"] == next(
+            s.site_uuid for s in sites if s.asset_type.name == "wind"
+        )
 
 
 @pytest.mark.parametrize("write_to_db", [True, False])
@@ -190,14 +197,13 @@ def test_app(write_to_db, requests_mock, db_session, caplog):
 
     caplog.set_level(logging.INFO)
     requests_mock.get(
-        DEFAULT_DATA_URL,
-        text=load_mock_response("tests/mock/responses/ruvnl-valid-response.json")
+        DEFAULT_DATA_URL, text=load_mock_response("tests/mock/responses/ruvnl-valid-response.json")
     )
     init_n_generation_data = db_session.query(GenerationSQL).count()
 
-    args = [f'--retry-interval={retry_interval}']
+    args = [f"--retry-interval={retry_interval}"]
     if write_to_db:
-        args.append('--write-to-db')
+        args.append("--write-to-db")
 
     result = run_click_script(app, args)
     assert result.exit_code == 0
@@ -206,4 +212,3 @@ def test_app(write_to_db, requests_mock, db_session, caplog):
         assert db_session.query(GenerationSQL).count() == init_n_generation_data + 2
     else:
         assert db_session.query(GenerationSQL).count() == init_n_generation_data
-
