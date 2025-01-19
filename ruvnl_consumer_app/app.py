@@ -170,19 +170,31 @@ def save_generation_data(
     for asset_type in ["pv", "wind"]:
         asset_data = generation_data[generation_data["asset_type"] == asset_type]
 
-        # Drop asset_type column
-        asset_data = asset_data.drop("asset_type", axis=1)
-
         if asset_data.empty:
             log.warning(f"No generation data for asset type: {asset_type}")
             continue
+
+        # check if generation exceeds capacity and update if necessary
+        if write_to_db:
+            site_uuid = asset_data["site_uuid"].iloc[0]
+            max_power = asset_data["power_kw"].max()
+            
+            site = db_session.query(SiteSQL).filter(SiteSQL.site_uuid == site_uuid).first()
+            if site and max_power > site.capacity_kw:
+                log.info(
+                    f"Updating capacity for site {site_uuid} from {site.capacity_kw}kW to {max_power}kW"
+                )
+                site.capacity_kw = max_power
+                db_session.add(site)
+
+        # Drop asset_type column
+        asset_data = asset_data.drop("asset_type", axis=1)
 
         if write_to_db:
             insert_generation_values(db_session, asset_data)
             db_session.commit()
         else:
             log.info(f"Generation data: {asset_type}:\n{asset_data.to_string()}")
-
 
 @click.command()
 @click.option(
