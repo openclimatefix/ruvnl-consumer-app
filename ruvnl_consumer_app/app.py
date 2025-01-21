@@ -71,7 +71,7 @@ def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
     Fetches the latest state-wide generation data for Rajasthan
 
     Args:
-            data_url: The URL ot query data from
+            data_url: The URL to query data from
             retry_interval: the amount of seconds to sleep between retying the api again.
 
     Returns:
@@ -113,6 +113,9 @@ def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
 
             start_utc = dt.datetime.fromtimestamp(int(record["SourceTimeSec"]), tz=dt.UTC)
             power_kw = record["Average2"] * 1000  # source is in MW, convert to kW
+            if power_kw < 0:
+                log.warning(f"Ignoring negative power value: {power_kw} kW for asset type: {v}")
+                continue
             if v == "wind":
                 if start_utc < dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=1):
                     start_ist = start_utc.astimezone(pytz.timezone("Asia/Calcutta"))
