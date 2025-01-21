@@ -74,6 +74,19 @@ class TestFetchData:
             assert not pd.isna(vals)
 
     @freeze_time("2021-01-31T10:01:00Z")
+    def test_fetch_data_with_negative_power(self, requests_mock, caplog):
+        """Test for fetching data with negative power values"""
+
+        requests_mock.get(
+            DEFAULT_DATA_URL,
+            text=load_mock_response("tests/mock/responses/ruvnl-valid-response-negative-power.json"),
+        )
+        result = fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
+
+        assert result.empty
+        assert "WARNING" in caplog.text
+
+    @freeze_time("2021-01-31T10:01:00Z")
     def test_fetch_data_with_missing_asset(self, requests_mock, caplog):
         """Test for fetching data with missing asset type"""
 
