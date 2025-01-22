@@ -192,15 +192,29 @@ class TestMergeGenerationDataWithSite:
 
 @pytest.mark.parametrize("write_to_db", [True, False])
 def test_save_generation_data(write_to_db, db_session, caplog, associated_generation_data):
-    """Test for saving generation data"""
+    """Test for saving generation data and capacity updates"""
 
     caplog.set_level(logging.INFO)
+    
+    # initial site capacity
+    site_uuid = associated_generation_data["site_uuid"].iloc[0]
+    site = db_session.query(SiteSQL).filter(SiteSQL.site_uuid == site_uuid).first()
+    initial_capacity = site.capacity_kw
+    
+    # generation data to exceed capacity
+    associated_generation_data.loc[0, "power_kw"] = initial_capacity * 2
     save_generation_data(db_session, associated_generation_data, write_to_db)
 
     if write_to_db:
         assert db_session.query(GenerationSQL).count() == 2
+        # Check capacity was updated
+        site = db_session.query(SiteSQL).filter(SiteSQL.site_uuid == site_uuid).first()
+        assert site.capacity_kw == initial_capacity * 2
     else:
         assert "Generation data:" in caplog.text
+        # Verify capacity wasn't updated when not writing to db
+        site = db_session.query(SiteSQL).filter(SiteSQL.site_uuid == site_uuid).first()
+        assert site.capacity_kw == initial_capacity
 
 
 @freeze_time("2021-01-31T10:01:00Z")
@@ -225,3 +239,4 @@ def test_app(write_to_db, requests_mock, db_session, caplog):
         assert db_session.query(GenerationSQL).count() == init_n_generation_data + 2
     else:
         assert db_session.query(GenerationSQL).count() == init_n_generation_data
+
