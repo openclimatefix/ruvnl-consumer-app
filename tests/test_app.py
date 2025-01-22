@@ -190,7 +190,6 @@ def test_save_generation_data(write_to_db, db_session, caplog, associated_genera
     
     # generation data to exceed capacity
     associated_generation_data.loc[0, "power_kw"] = initial_capacity * 2
-    
     save_generation_data(db_session, associated_generation_data, write_to_db)
 
     if write_to_db:

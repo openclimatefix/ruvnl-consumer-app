@@ -177,7 +177,7 @@ def save_generation_data(
         # check if generation exceeds capacity and update if necessary
         if write_to_db:
             site_uuid = asset_data["site_uuid"].iloc[0]
-            max_power = asset_data["power_kw"].max()
+            max_power = float(asset_data["power_kw"].max())  
             
             site = db_session.query(SiteSQL).filter(SiteSQL.site_uuid == site_uuid).first()
             if site and max_power > site.capacity_kw:
