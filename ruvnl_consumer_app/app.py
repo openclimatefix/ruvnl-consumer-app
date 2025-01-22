@@ -182,10 +182,11 @@ def save_generation_data(
             site = db_session.query(SiteSQL).filter(SiteSQL.site_uuid == site_uuid).first()
             if site and max_power > site.capacity_kw:
                 log.info(
-                    f"Updating capacity for site {site_uuid} from {site.capacity_kw}kW to {max_power}kW"
+                    f"Updating capacity for site {site_uuid} from {site.capacity_kw}kW "
+                    f"to {max_power}kW"
                 )
                 site.capacity_kw = max_power
-                db_session.add(site)
+                db_session.commit()
 
         # Drop asset_type column
         asset_data = asset_data.drop("asset_type", axis=1)
