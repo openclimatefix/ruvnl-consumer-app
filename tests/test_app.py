@@ -101,11 +101,12 @@ class TestFetchData:
         assert "No generation data for asset type: pv" in caplog.text
 
     def test_catch_bad_response_code(self, requests_mock):
-        """Test for catching bad response code"""
+        """Test for handling bad response code by returning empty DataFrame"""
 
         requests_mock.get(DEFAULT_DATA_URL, status_code=404, reason="Not Found")
-        # just a warning now
-        fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
+        result = fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
+        assert isinstance(result, pd.DataFrame)
+        assert result.empty
 
     def test_old_fetch_data(self, requests_mock):
         """Test for correctly fetching data"""
@@ -129,12 +130,12 @@ class TestFetchData:
             fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
 
     def test_call_bad_url(self, requests_mock):
-        """Test to check timeout doesnt cause error"""
+        """Test to check timeout raises error after max retries"""
 
         requests_mock.get(DEFAULT_DATA_URL, exc=requests.exceptions.ConnectTimeout)
 
-        data = fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
-        assert len(data) == 0
+        with pytest.raises(RuntimeError, match=r"Failed to fetch data after \d+ attempts from.*"):
+            fetch_data(DEFAULT_DATA_URL, retry_interval=retry_interval)
 
 
 class TestMergeGenerationDataWithSite:

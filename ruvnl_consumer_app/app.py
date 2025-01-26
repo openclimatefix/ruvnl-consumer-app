@@ -76,6 +76,9 @@ def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
 
     Returns:
             A pandas DataFrame of generation values for wind and PV
+
+    Raises:
+            RuntimeError: If max retries are reached without any response
     """
     print("Starting to get data")
     retries = 0
@@ -83,23 +86,19 @@ def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
     while retries < max_retries:
         try:
             r = requests.get(data_url, timeout=10)  # 10 second
-            if r.status_code == 200:
-                # dont go into the loop again
-                retries = max_retries
-                break
-            else:
-                log.warning(f"Status code: {r.status_code}")
-        except requests.exceptions.Timeout:
+            # Got a response (even if not 200), so break the retry loop
+            break
+        except requests.exceptions.Timeout as err:
             log.error("Timed out")
-        log.info(f"Retrying again in {retry_interval} seconds (retry count: {retries})")
-        time.sleep(retry_interval)
-        retries += 1
+            retries += 1
+            if retries == max_retries:
+                error_msg = f"Failed to fetch data after {max_retries} attempts from {data_url}"
+                log.error(error_msg)
+                raise RuntimeError(error_msg) from err
+            log.info(f"Retrying again in {retry_interval} seconds (retry count: {retries})")
+            time.sleep(retry_interval)
 
-        if retries == max_retries:
-            log.error(f"Max retries reached - Could not get data from {data_url}")
-            return pd.DataFrame(columns=["asset_type", "start_utc", "power_kw"])
-
-    # return empty dataframe if response is not 200
+    # Handle non-200 status codes by returning empty DataFrame
     if r.status_code != 200:
         log.warning(f"Failed to fetch data from {data_url}. Status code: {r.status_code}")
         return pd.DataFrame(columns=["asset_type", "start_utc", "power_kw"])
