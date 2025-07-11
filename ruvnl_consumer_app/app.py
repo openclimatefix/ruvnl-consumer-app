@@ -19,7 +19,7 @@ import pandas as pd
 import pytz
 import requests
 import sentry_sdk
-from pvsite_datamodel import DatabaseConnection, SiteSQL
+from pvsite_datamodel import DatabaseConnection, LocationSQL
 from pvsite_datamodel.read import get_sites_by_country
 from pvsite_datamodel.write import insert_generation_values
 from sqlalchemy.orm import Session
@@ -37,7 +37,7 @@ sentry_sdk.set_tag("version", __version__)
 DEFAULT_DATA_URL = "http://sldc.rajasthan.gov.in/rrvpnl/read-sftp?type=overview"
 
 
-def get_sites(db_session: Session) -> list[SiteSQL]:
+def get_sites(db_session: Session) -> list[LocationSQL]:
     """
     Gets 1 site for each asset type (pv and wind)
 
@@ -45,7 +45,7 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
             db_session: A SQLAlchemy session
 
     Returns:
-            A list of SiteSQL objects
+            A list of LocationSQL objects
     """
 
     all_sites = get_sites_by_country(db_session, country="india")
@@ -135,20 +135,20 @@ def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-def merge_generation_data_with_sites(data: pd.DataFrame, sites: list[SiteSQL]) -> pd.DataFrame:
+def merge_generation_data_with_sites(data: pd.DataFrame, sites: list[LocationSQL]) -> pd.DataFrame:
     """
     Augments the input dataframe with corresponding site_uuid
 
     Args:
             data: A dataframe of generation data
-            sites: a list of SiteSQL objects
+            sites: a list of LocationSQL objects
 
     Returns:
             An augmented dataframe with the associated site uuids
     """
 
     # Associate correct site_uuid with each generation asset type
-    sites_map = {s.asset_type.name: s.site_uuid for s in sites}
+    sites_map = {s.asset_type.name: s.location_uuid for s in sites}
     data["site_uuid"] = data["asset_type"].apply(lambda d: sites_map[d] if d in sites_map else None)
 
     # Remove generation data for which we have no associated site
@@ -181,7 +181,7 @@ def save_generation_data(
             site_uuid = asset_data["site_uuid"].iloc[0]
             max_power = float(asset_data["power_kw"].max())  
             
-            site = db_session.query(SiteSQL).filter(SiteSQL.site_uuid == site_uuid).first()
+            site = db_session.query(LocationSQL).filter(LocationSQL.location_uuid == site_uuid).first()
             if site and max_power > site.capacity_kw:
                 log.info(
                     f"Updating capacity for site {site_uuid} from {site.capacity_kw}kW "

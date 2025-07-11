@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 import requests
 from freezegun import freeze_time
-from pvsite_datamodel import GenerationSQL, SiteSQL
+from pvsite_datamodel import GenerationSQL, LocationSQL
 
 from ruvnl_consumer_app.app import (
     DEFAULT_DATA_URL,
@@ -37,7 +37,7 @@ class TestGetSites:
 
         assert len(sites) == 2
         for site in sites:
-            assert isinstance(site.site_uuid, uuid.UUID)
+            assert isinstance(site.location_uuid, uuid.UUID)
 
         assert sites[0].asset_type.name == "pv"
         assert sites[1].asset_type.name == "wind"
@@ -144,7 +144,7 @@ class TestMergeGenerationDataWithSite:
     def test_merge_data_with_sites(self, db_session, unassociated_generation_data):
         """Test for successful merge of generation data with sites"""
 
-        sites = db_session.query(SiteSQL).all()
+        sites = db_session.query(LocationSQL).all()
         result = merge_generation_data_with_sites(unassociated_generation_data, sites)
 
         assert isinstance(result, pd.DataFrame)
@@ -162,7 +162,7 @@ class TestMergeGenerationDataWithSite:
     ):
         """Test for merge of generation data without pv with sites"""
 
-        sites = db_session.query(SiteSQL).all()
+        sites = db_session.query(LocationSQL).all()
         df = unassociated_generation_data
         data_without_pv = df.drop(df[df["asset_type"] == "pv"].index)
 
@@ -173,7 +173,7 @@ class TestMergeGenerationDataWithSite:
 
         assert result.shape[0] == 1
         assert result.iloc[0]["site_uuid"] == next(
-            s.site_uuid for s in sites if s.asset_type.name == "wind"
+            s.location_uuid for s in sites if s.asset_type.name == "wind"
         )
 
     def test_merge_data_with_sites_with_missing_pv_site(
@@ -181,13 +181,13 @@ class TestMergeGenerationDataWithSite:
     ):
         """Test for merge of generation data with missing pv site"""
 
-        sites = db_session.query(SiteSQL).filter(SiteSQL.asset_type == "wind")
+        sites = db_session.query(LocationSQL).filter(LocationSQL.asset_type == "wind")
 
         result = merge_generation_data_with_sites(unassociated_generation_data, sites)
 
         assert result.shape[0] == 1
         assert result.iloc[0]["site_uuid"] == next(
-            s.site_uuid for s in sites if s.asset_type.name == "wind"
+            s.location_uuid for s in sites if s.asset_type.name == "wind"
         )
 
 
@@ -199,7 +199,7 @@ def test_save_generation_data(write_to_db, db_session, caplog, associated_genera
     
     # initial site capacity
     site_uuid = associated_generation_data["site_uuid"].iloc[0]
-    site = db_session.query(SiteSQL).filter(SiteSQL.site_uuid == site_uuid).first()
+    site = db_session.query(LocationSQL).filter(LocationSQL.location_uuid == site_uuid).first()
     initial_capacity = site.capacity_kw
     
     # generation data to exceed capacity
@@ -209,12 +209,12 @@ def test_save_generation_data(write_to_db, db_session, caplog, associated_genera
     if write_to_db:
         assert db_session.query(GenerationSQL).count() == 2
         # Check capacity was updated
-        site = db_session.query(SiteSQL).filter(SiteSQL.site_uuid == site_uuid).first()
+        site = db_session.query(LocationSQL).filter(LocationSQL.location_uuid == site_uuid).first()
         assert site.capacity_kw == initial_capacity * 2
     else:
         assert "Generation data:" in caplog.text
         # Verify capacity wasn't updated when not writing to db
-        site = db_session.query(SiteSQL).filter(SiteSQL.site_uuid == site_uuid).first()
+        site = db_session.query(LocationSQL).filter(LocationSQL.location_uuid == site_uuid).first()
         assert site.capacity_kw == initial_capacity
 
 
