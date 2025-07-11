@@ -7,7 +7,7 @@ import os
 
 import pandas as pd
 import pytest
-from pvsite_datamodel.sqlmodels import Base, SiteSQL
+from pvsite_datamodel.sqlmodels import Base, LocationSQL
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from testcontainers.postgres import PostgresContainer
@@ -55,8 +55,8 @@ def db_data(engine):
     with engine.connect() as connection:
         with Session(bind=connection) as session:
             # PV site
-            site = SiteSQL(
-                client_site_id=1,
+            site = LocationSQL(
+                client_location_id=1,
                 latitude=20.59,
                 longitude=78.96,
                 capacity_kw=4,
@@ -68,8 +68,8 @@ def db_data(engine):
             session.add(site)
 
             # Wind site
-            site = SiteSQL(
-                client_site_id=2,
+            site = LocationSQL(
+                client_location_id=2,
                 latitude=20.59,
                 longitude=78.96,
                 capacity_kw=4,
@@ -91,7 +91,7 @@ def unassociated_generation_data(db_session):
     Instead this dataframe provides the associated asset types
     """
 
-    sites = db_session.query(SiteSQL).all()
+    sites = db_session.query(LocationSQL).all()
     data = [
         ("pv" if i == 0 else "wind", dt.datetime.now(tz=dt.UTC), i + 1) for i, s in enumerate(sites)
     ]
@@ -103,9 +103,9 @@ def unassociated_generation_data(db_session):
 def associated_generation_data(db_session):
     """A valid generation dataframe with associated site uuids"""
 
-    sites = db_session.query(SiteSQL).all()
+    sites = db_session.query(LocationSQL).all()
     data = [
-        (s.site_uuid, dt.datetime.now(tz=dt.UTC), i + 1, s.asset_type.name)
+        (s.location_uuid, dt.datetime.now(tz=dt.UTC), i + 1, s.asset_type.name)
         for i, s in enumerate(sites)
     ]
 
