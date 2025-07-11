@@ -179,9 +179,11 @@ def save_generation_data(
         # check if generation exceeds capacity and update if necessary
         if write_to_db:
             site_uuid = asset_data["site_uuid"].iloc[0]
-            max_power = float(asset_data["power_kw"].max())  
-            
-            site = db_session.query(LocationSQL).filter(LocationSQL.location_uuid == site_uuid).first()
+            max_power = float(asset_data["power_kw"].max())
+
+            site = (
+                db_session.query(LocationSQL).filter(LocationSQL.location_uuid == site_uuid).first()
+            )
             if site and max_power > site.capacity_kw:
                 log.info(
                     f"Updating capacity for site {site_uuid} from {site.capacity_kw}kW "
@@ -198,6 +200,7 @@ def save_generation_data(
             db_session.commit()
         else:
             log.info(f"Generation data: {asset_type}:\n{asset_data.to_string()}")
+
 
 @click.command()
 @click.option(
