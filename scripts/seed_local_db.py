@@ -53,6 +53,7 @@ def seed_db():
             capacity_kw=4,
             asset_type="pv",
             country="india",
+            region="ruvnl",
         )
 
         site, _ = create_site(
@@ -64,6 +65,7 @@ def seed_db():
             capacity_kw=4,
             asset_type="wind",
             country="india",
+            region="ruvnl",
         )
 
         print("Database successfully seeded")
