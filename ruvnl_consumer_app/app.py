@@ -13,10 +13,10 @@ import logging
 import os
 import sys
 import time
+from zoneinfo import ZoneInfo
 
 import click
 import pandas as pd
-import pytz
 import requests
 import sentry_sdk
 from pvsite_datamodel import DatabaseConnection, LocationSQL
@@ -117,9 +117,9 @@ def fetch_data(data_url: str, retry_interval: int = 30) -> pd.DataFrame:
                 continue
             if v == "wind":
                 if start_utc < dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=1):
-                    start_ist = start_utc.astimezone(pytz.timezone("Asia/Calcutta"))
+                    start_ist = start_utc.astimezone(ZoneInfo("Asia/Kolkata"))
                     start_ist = str(start_ist)
-                    now = dt.datetime.now(pytz.timezone("Asia/Calcutta"))
+                    now = dt.datetime.now(ZoneInfo("Asia/Kolkata"))
                     now = str(now)
                     timestamp_after_raise = f"Timestamp Now: {now} Timestamp data: {start_ist}"
                     timestamp_fstring = f"{timestamp_after_raise}"
